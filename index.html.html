@@ -1,0 +1,417 @@
+<title>相似城堡大冒險</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chiron+GoRound+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=DM+Mono:wght@500&display=swap">
+<style>
+/* 概念:方格紙上的闖關地圖。藍墨水寫字、螢光黃劃重點,答對蓋綠章。 */
+:root{
+  --paper:#f2f6fa; --card:#ffffff; --ink:#15263a; --ink-soft:#4b6178; --grid:#dbe5ef;
+  --pen:#2457c5; --hi:#ffd84a; --hi-ink:#4a3a00; --ok:#16875c; --ok-bg:#dff4ea; --bad:#c93b3b; --bad-bg:#fbe3e3; --line:#c7d4e2;
+  --f-disp:"Chiron GoRound TC","Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-body:"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif;
+  --f-mono:"DM Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#0f1b2d; --card:#172740; --ink:#e8eef6; --ink-soft:#9db0c5; --grid:#1d3050;
+  --pen:#7fa6ff; --hi:#ffd84a; --hi-ink:#2d2400; --ok:#4fd19b; --ok-bg:#123a2c; --bad:#ff8585; --bad-bg:#431f24; --line:#2c4466; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#0f1b2d; --card:#172740; --ink:#e8eef6; --ink-soft:#9db0c5; --grid:#1d3050;
+  --pen:#7fa6ff; --hi:#ffd84a; --hi-ink:#2d2400; --ok:#4fd19b; --ok-bg:#123a2c; --bad:#ff8585; --bad-bg:#431f24; --line:#2c4466; color-scheme:dark}
+*{box-sizing:border-box}
+body{background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.6;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px;
+  padding-block:0 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:16px;min-width:0}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--paper);border-bottom:2px solid var(--ink);margin:0 -16px;padding:10px 16px;
+  display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between}
+h1{font-family:var(--f-disp);font-weight:900;font-size:1.5rem;margin:0;line-height:1.2;text-wrap:balance}
+h1 span{background:linear-gradient(transparent 58%,var(--hi) 58%);padding:0 .1em}
+h2{font-family:var(--f-disp);font-weight:700;font-size:1.3rem;margin:0;text-wrap:balance}
+p{margin:0}
+.ov{text-decoration:overline;text-decoration-thickness:1.5px;text-underline-offset:0}
+svg.sim{display:inline-block;width:1.15em;height:.8em;vertical-align:-.04em;margin:0 .12em;overflow:visible}
+.meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.pill{font-family:var(--f-mono);font-size:.9rem;border:2px solid var(--ink);border-radius:999px;padding:2px 12px;background:var(--card)}
+button,input{font:inherit;color:inherit}
+button{cursor:pointer;min-height:48px;padding:8px 18px;border-radius:10px;border:2px solid var(--ink);background:var(--card);font-weight:700}
+button:hover{background:var(--hi);color:var(--hi-ink)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--pen);outline-offset:2px}
+button.primary{background:var(--pen);color:#fff;border-color:var(--pen)}
+button.primary:hover{background:var(--ink);border-color:var(--ink);color:#fff}
+button.ghost{border-color:var(--line);font-weight:500;min-height:40px}
+button:disabled{opacity:.55;cursor:default}
+.card{background:var(--card);border:2px solid var(--ink);border-radius:14px;padding:16px;box-shadow:4px 4px 0 var(--ink)}
+.stack{display:flex;flex-direction:column;gap:12px;min-width:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--ink-soft);font-size:.92rem}
+.levels{display:flex;gap:8px}
+.levels button{min-height:40px;padding:4px 14px;font-weight:500}
+.levels button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+/* 地圖 */
+.map{display:flex;flex-direction:column;gap:14px;counter-reset:s}
+.st{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;text-align:left;width:100%;padding:14px 16px;border-radius:14px;border:2px solid var(--ink);background:var(--card);box-shadow:4px 4px 0 var(--ink);min-height:84px}
+.st:hover{background:var(--card);transform:translate(-1px,-1px);box-shadow:6px 6px 0 var(--ink)}
+.st .no{font-family:var(--f-disp);font-weight:900;font-size:1.5rem;width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--hi);color:var(--hi-ink);border:2px solid var(--ink)}
+.st.done .no{background:var(--ok);color:#fff}
+.st b{display:block;font-family:var(--f-disp);font-size:1.12rem}
+.st small{color:var(--ink-soft);font-size:.9rem}
+.stars{font-family:var(--f-mono);letter-spacing:1px;white-space:nowrap;color:var(--ink-soft)}
+.stars i{font-style:normal;color:var(--ink-soft)}
+.stars i.on{color:#e0a100}
+.back{align-self:flex-start;min-height:40px}
+/* 題目 */
+.q{font-size:1.25rem;line-height:1.7;font-weight:500}
+.bar{height:10px;border:2px solid var(--ink);border-radius:99px;overflow:hidden;background:var(--card)}
+.bar>i{display:block;height:100%;background:var(--pen);transition:width .25s}
+.tf{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tf button{min-height:96px;font-size:2.4rem;font-family:var(--f-disp);font-weight:900;display:flex;flex-direction:column;gap:0;line-height:1.1}
+.tf button small{font-size:1rem;font-weight:500}
+.fb{border-radius:10px;padding:12px 14px;border:2px solid}
+.fb.ok{background:var(--ok-bg);border-color:var(--ok)}
+.fb.no{background:var(--bad-bg);border-color:var(--bad)}
+.fb b{display:block}
+/* 配對 */
+.pairs{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.pairs .col{display:flex;flex-direction:column;gap:10px;min-width:0}
+.pc{min-height:68px;padding:8px 10px;font-weight:500;font-size:.98rem;line-height:1.35;text-align:center;white-space:pre-line;overflow-wrap:anywhere}
+.pc.ans{font-family:var(--f-mono);font-size:1.15rem}
+.pc.sel{background:var(--hi);color:var(--hi-ink)}
+.pc.ok{background:var(--ok-bg);border-color:var(--ok);color:var(--ink)}
+.pc.shake{animation:shake .3s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+/* 密室 */
+.lock{display:flex;flex-direction:column;gap:10px}
+.lock.solved{border-color:var(--ok);box-shadow:4px 4px 0 var(--ok)}
+.lock h3{margin:0;font-family:var(--f-disp);font-size:1.08rem;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.tag{font-family:var(--f-mono);font-size:.8rem;border:1.5px solid var(--line);border-radius:6px;padding:0 6px;color:var(--ink-soft)}
+.ans-row{display:flex;gap:10px;flex-wrap:wrap}
+.ans-row input{flex:1 1 140px;min-width:0;min-height:52px;font-family:var(--f-mono);font-size:1.3rem;padding:6px 12px;border:2px solid var(--ink);border-radius:10px;background:var(--paper)}
+.hint{border-left:5px solid var(--hi);padding:4px 10px;background:color-mix(in srgb,var(--hi) 18%,transparent);font-size:.96rem}
+.code{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.code span{min-width:64px;height:60px;display:grid;place-items:center;font-family:var(--f-mono);font-size:1.6rem;border:2px solid var(--ink);border-radius:10px;background:var(--paper)}
+.code span.on{background:var(--ok);color:#fff;border-color:var(--ok)}
+.treasure{text-align:center;padding:18px;border:3px dashed var(--ok);border-radius:14px;background:var(--ok-bg)}
+svg.fig{display:block;margin:0 auto;max-width:100%;height:auto}
+svg.fig text{fill:var(--ink);font-family:var(--f-mono);font-size:15px;font-weight:500}
+svg.fig .ln{stroke:var(--ink);stroke-width:2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.cap{text-align:center;font-size:.85rem;color:var(--ink-soft)}
+/* 方格 */
+.gridbox{overflow-x:auto}
+svg.grid{display:block;margin:0 auto;width:100%;max-width:480px;height:auto;touch-action:manipulation}
+svg.grid .gl{stroke:var(--line);stroke-width:1}
+svg.grid .pt{fill:transparent;cursor:pointer}
+svg.grid .pt:hover{fill:var(--hi)}
+svg.grid .dot{fill:var(--line);pointer-events:none}
+svg.grid .mine{stroke:var(--pen);stroke-width:3;fill:color-mix(in srgb,var(--pen) 16%,transparent);stroke-linejoin:round}
+svg.grid .mv{fill:var(--pen);pointer-events:none}
+svg.grid text{fill:var(--ink);font-family:var(--f-mono);font-size:12px;pointer-events:none}
+.tbl{display:grid;grid-template-columns:1fr;gap:10px}
+.tbl label{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.tbl input{width:120px;min-height:48px;font-family:var(--f-mono);font-size:1.2rem;padding:4px 10px;border:2px solid var(--ink);border-radius:10px;background:var(--paper)}
+/* 成績 */
+.ubar{display:grid;grid-template-columns:5.2rem 1fr 4.2rem;gap:10px;align-items:center}
+.ubar .bar{height:16px}
+.ubar .bar>i{background:var(--ok)}
+.ubar.weak .bar>i{background:var(--bad)}
+.nm{min-height:48px;padding:6px 12px;border:2px solid var(--ink);border-radius:10px;background:var(--paper);width:100%;max-width:260px}
+@media (max-width:420px){body{font-size:16px}.pc{font-size:.9rem}.tf button{min-height:84px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <h1><span>相似城堡</span>大冒險</h1>
+    <div class="meta">
+      <span class="pill" id="starTotal">★ 0 / 15</span>
+      <button class="ghost" id="snd" aria-pressed="true">音效:開</button>
+    </div>
+  </header>
+  <main id="view" class="stack"></main>
+</div>
+
+<script>
+"use strict";
+/* ---------------- 資料 ---------------- */
+const TF=[
+ ["所有的正方形都相似。",1,"1-3","四個角都是 90°、四邊都相等,所以對應角相等、對應邊成比例。"],
+ ["所有的長方形都相似。",0,"1-3","例如 2×4 和 2×3:角都是 90°,但邊長比不一樣。"],
+ ["所有的菱形都相似。",0,"1-3","四邊雖然都相等,但角度可以不同,例如正方形和扁菱形。"],
+ ["所有的正三角形都相似。",1,"1-3","三個角都是 60°,三邊都相等。"],
+ ["所有的等腰三角形都相似。",0,"1-3","頂角可以不同,例如頂角 30° 和 100°。"],
+ ["所有的正五邊形都相似。",1,"1-3","每個角都是 108°,每邊都相等。"],
+ ["兩個全等的多邊形一定相似。",1,"1-3","全等就是相似比 1:1 的特例。"],
+ ["兩個相似的多邊形一定全等。",0,"1-3","相似只要形狀一樣,大小可以不同。"],
+ ["兩個四邊形的對應邊成比例,就一定相似。",0,"1-3","還要對應角相等。正方形和菱形的四邊比都是 1:1,卻不相似。"],
+ ["兩個四邊形的對應角都相等,就一定相似。",0,"1-3","2×4 和 2×3 的長方形,角都相等,邊卻不成比例。"],
+ ["相似比是 2:3 的相似多邊形,周長比是 2:3。",1,"1-3","周長比=相似比。"],
+ ["相似比是 2:3 的相似多邊形,周長比是 4:9。",0,"1-3","周長比=相似比,不是平方。(平方是面積,1-4 才學)"]
+];
+const PAIRS=[
+ ["12:18","2:3","1-1"],["0.5:1.5","1:3","1-1"],["15:25","3:5","1-1"],
+ ["a:b=2:3,b:c=3:4\n則 a:b:c=?","2:3:4","1-1"],["a:b=1:2,b:c=3:4\n則 a:b:c=?","3:6:8","1-1"],
+ ["a:b=3:4,b:c=2:5\n則 a:b:c=?","3:4:10","1-1"],["x:6=2:3\n則 x=?","4","1-1"],
+ ["a:b:c=1:2:3,a+b+c=18\n則 b=?","6","1-1"],
+ ["DE∥BC,AD=4,DB=6,AE=6\n則 EC=?","9","1-2"]
+];
+const LOCKS={
+ basic:[
+  {n:"連比",u:"1-1",q:"已知 a:b=2:3,b:c=3:5,且 a+b+c=30,求 b。",a:"9",h:["b 都是 3,可以直接連起來:a:b:c=2:3:5。","設 a=2k、b=3k、c=5k,則 2k+3k+5k=30。"],e:"2k+3k+5k=10k=30,k=3,所以 b=3×3=9。"},
+  {n:"比例式",u:"1-1",q:"解比例式 6:9=x:12,求 x。",a:"8",h:["內項積=外項積:9×x=6×12。","9x=72。"],e:"9x=72,x=8。"},
+  {n:"比例線段",u:"1-2",f:1,q:"如圖,DE∥BC,AD=6,DB=4,EC=10,求 AE。",a:"15",h:["平行線截比例線段:AD:DB=AE:EC。","6:4=AE:10,內項積=外項積。"],e:"6:4=AE:10,4×AE=60,AE=15。"},
+  {n:"相似多邊形",u:"1-3",f:3,q:"如圖,四邊形 ABCD∽四邊形 EFGH,AB=6,BC=9,EF=8,求 FG。",a:"12",h:["對應邊成比例:AB:EF=BC:FG。","6:8=9:FG。"],e:"6×FG=72,FG=12。"}],
+ adv:[
+  {n:"連比",u:"1-1",q:"已知 a:b=3:4,b:c=6:5,且 a+b+c=62,求 b。",a:"24",h:["把 b 配成一樣:a:b=3:4=9:12,b:c=6:5=12:10。","a:b:c=9:12:10,共 31 份,總和 62 是 2 倍。"],e:"a:b:c=9:12:10,31 份=62,每份是 2,b=12×2=24。"},
+  {n:"比例式",u:"1-1",q:"解比例式 (3x+2):(x+6)=5:3,求 x。",a:"6",h:["內項積=外項積:3(3x+2)=5(x+6)。","展開:9x+6=5x+30。"],e:"9x+6=5x+30,4x=24,x=6。"},
+  {n:"比例線段",u:"1-2",f:2,q:"如圖,直線 L1∥L2∥L3,AB=4,BC=10,DF=28,求 EF。",a:"20",h:["AB:BC=DE:EF=4:10=2:5。","DF=DE+EF,共 2+5=7 份。"],e:"28÷7=4,EF=5×4=20。"},
+  {n:"相似多邊形",u:"1-3",q:"四邊形 ABCD∽四邊形 EFGH,AB=6,BC=9,CD=12,DA=3,且四邊形 EFGH 的周長是 50,求 HE。",a:"5",h:["先求 ABCD 的周長:6+9+12+3=30。","周長比=相似比=30:50=3:5。HE 對應的是 DA。"],e:"相似比 3:5,HE=3×5÷3=5。"}]
+};
+const EXIT={
+ basic:[{u:"1-1",q:"2:3=x:15,求 x。",a:"10",e:"3x=30,x=10。"},
+        {u:"1-2",f:1,q:"如圖,DE∥BC,AD=3,DB=2,AE=9,求 EC。",a:"6",e:"3:2=9:EC,3×EC=18,EC=6。"},
+        {u:"1-3",q:"兩個相似多邊形的相似比是 3:4,小的周長是 21,大的周長是多少?",a:"28",e:"周長比=3:4,21÷3×4=28。"}],
+ adv:[{u:"1-1",q:"a:b=2:5,b:c=3:4,求 a:b:c。(寫成 □:□:□)",a:"6:15:20",e:"a:b=2:5=6:15,b:c=3:4=15:20,所以 6:15:20。"},
+      {u:"1-2",f:2,q:"如圖,直線 L1∥L2∥L3,AB=5,BC=7,DE=10,求 EF。",a:"14",e:"5:7=10:EF,5×EF=70,EF=14。"},
+      {u:"1-3",q:"兩個相似多邊形的相似比是 3:5,小的周長是 24,大的周長是多少?",a:"40",e:"周長比=3:5,24÷3×5=40。"}]
+};
+const GRID_TARGET=[[0,0],[8,0],[8,4],[4,4],[4,6],[0,6]];
+const STATIONS=[
+ {id:"tf",t:"○× 速答",s:"12 題概念題,判斷對錯",u:"1-3"},
+ {id:"pair",t:"連比配對",s:"把題目和答案配成一對",u:"1-1、1-2"},
+ {id:"lock",t:"密室逃脫:4 道鎖",s:"解開每道鎖,拿到寶箱密碼",u:"1-1~1-3"},
+ {id:"grid",t:"方格放大影印機",s:"把 L 形放大 2 倍",u:"1-3"},
+ {id:"exit",t:"出場券",s:"3 題檢查,通關就能下課",u:"1-1~1-3"}
+];
+
+/* ---------------- 數學符號:線段上橫線、相似符號 ---------------- */
+const SIM='<svg class="sim" viewBox="0 0 24 16" role="img" aria-label="相似"><path d="M1.5 10C4 3 9 3 12 8C15 13 20 13 22.5 6" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>';
+function ov(t){return t.replace(/(^|[^A-Za-z])([A-Z]{2})(?![A-Za-z])/g,(m,p,x)=>p+'<span class="ov">'+x+'</span>').replace(/∽/g,SIM)}
+TF.forEach(t=>{t[0]=ov(t[0]);t[3]=ov(t[3])});
+PAIRS.forEach(p=>{p[0]=ov(p[0])});
+Object.values(LOCKS).forEach(a=>a.forEach(k=>{k.q=ov(k.q);k.h=k.h.map(ov);k.e=ov(k.e)}));
+Object.values(EXIT).forEach(a=>a.forEach(k=>{k.q=ov(k.q);k.e=ov(k.e)}));
+
+/* ---------------- 狀態 ---------------- */
+const KEY="simi-castle-v1";
+const blank=()=>({name:"",level:"basic",stars:{},locks:{basic:[0,0,0,0],adv:[0,0,0,0]},hints:{basic:[0,0,0,0],adv:[0,0,0,0]},
+  lockMiss:{basic:0,adv:0},tf:{done:0,score:0},exit:{basic:null,adv:null},unit:{"1-1":[0,0],"1-2":[0,0],"1-3":[0,0]},pairDone:0,gridDone:0});
+let S=blank();
+try{const r=localStorage.getItem(KEY);if(r){S=Object.assign(blank(),JSON.parse(r))}}catch(e){}
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+const rec=(u,ok)=>{if(S.unit[u]){S.unit[u][ok?0:1]++;save()}};
+const total=()=>Object.values(S.stars).reduce((a,b)=>a+b,0);
+const $=id=>document.getElementById(id);
+const view=$("view");
+
+/* ---------------- 音效 ---------------- */
+let sndOn=true,ac=null;
+function tone(f,d,t){if(!sndOn)return;try{ac=ac||new (window.AudioContext||window.webkitAudioContext)();const o=ac.createOscillator(),g=ac.createGain();
+  o.type=t||"sine";o.frequency.value=f;g.gain.setValueAtTime(.12,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+d)}catch(e){}}
+const good=()=>{tone(660,.12);setTimeout(()=>tone(880,.18),110)};
+const bad=()=>tone(200,.25,"square");
+$("snd").onclick=e=>{sndOn=!sndOn;e.target.setAttribute("aria-pressed",sndOn);e.target.textContent="音效:"+(sndOn?"開":"關")};
+
+/* ---------------- 工具 ---------------- */
+const norm=s=>{s=String(s).trim().replace(/[：﹕]/g,":").replace(/\s+/g,"").replace(/[０-９]/g,c=>String.fromCharCode(c.charCodeAt(0)-65248));if(s.includes("="))s=s.split("=").pop();return s};
+const same=(inp,ans)=>{const n=norm(inp);if(n===ans)return true;const x=parseFloat(n),y=parseFloat(ans);return n!==""&&!/[:]/.test(n)&&!isNaN(x)&&x===y};
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const starsHTML=n=>`<span class="stars" aria-label="${n} 顆星">`+[1,2,3].map(i=>`<i class="${i<=n?"on":""}">★</i>`).join("")+`</span>`;
+function award(id,n){S.stars[id]=Math.max(S.stars[id]||0,n);save();head()}
+function head(){$("starTotal").textContent="★ "+total()+" / 15"}
+
+/* ---------------- 附圖 ---------------- */
+const FIGS={
+1:`<svg class="fig" viewBox="0 0 220 175" width="200" role="img" aria-label="三角形 ABC,DE 平行 BC"><path class="ln" d="M110 18 L20 150 L200 150 Z M50 105 L170 105"/><text x="104" y="12">A</text><text x="2" y="165">B</text><text x="200" y="165">C</text><text x="28" y="110">D</text><text x="176" y="110">E</text></svg><div class="cap">圖一</div>`,
+2:`<svg class="fig" viewBox="0 0 270 175" width="230" role="img" aria-label="三條平行線與兩條截線"><path class="ln" d="M10 25H225M10 70H225M10 150H225M45.5 10L90.5 160M153 10L122 160"/><text x="235" y="30">L1</text><text x="235" y="75">L2</text><text x="235" y="155">L3</text><text x="28" y="22">A</text><text x="44" y="68">B</text><text x="68" y="146">C</text><text x="158" y="22">D</text><text x="150" y="66">E</text><text x="130" y="168">F</text></svg><div class="cap">圖二</div>`,
+3:`<svg class="fig" viewBox="0 0 310 135" width="300" role="img" aria-label="相似的兩個四邊形"><path class="ln" d="M10 115L86.8 115L99.6 63.8L26 73.4Z M150 115L265.2 115L284.4 38.2L174 52.6Z"/><text x="0" y="130">A</text><text x="84" y="130">B</text><text x="104" y="62">C</text><text x="10" y="78">D</text><text x="140" y="130">E</text><text x="262" y="130">F</text><text x="288" y="40">G</text><text x="158" y="50">H</text></svg><div class="cap">圖三(示意圖,不按比例)</div>`
+};
+
+/* ---------------- 首頁 ---------------- */
+function stationState(id){
+  if(id==="tf")return S.tf.done;
+  if(id==="pair")return S.pairDone;
+  if(id==="lock")return S.locks[S.level].every(Boolean);
+  if(id==="grid")return S.gridDone;
+  if(id==="exit")return !!S.exit[S.level];
+}
+function home(){
+  head();
+  view.innerHTML=`
+  <section class="card stack">
+    <h2>歡迎來到相似城堡</h2>
+    <p>魔王把寶藏鎖在城堡裡。依序闖過 5 站,拿到所有星星,就能打開寶箱。每一站都會告訴你哪裡對、哪裡錯。</p>
+    <div class="row"><b>選難度</b>
+      <div class="levels" role="group" aria-label="難度">
+        <button data-lv="basic" aria-pressed="${S.level==="basic"}">基礎(有提示)</button>
+        <button data-lv="adv" aria-pressed="${S.level==="adv"}">進階(挑戰)</button>
+      </div></div>
+    <p class="muted">難度只影響第 3 站和出場券。卡住了,按「給我提示」就好,不扣分。</p>
+  </section>
+  <div class="map">${STATIONS.map((s,i)=>{const done=stationState(s.id);return `
+    <button class="st ${done?"done":""}" data-go="${s.id}"><span class="no">${done?"✓":i+1}</span>
+      <span><b>${s.t}</b><small>${s.s}・${s.u}</small></span>${starsHTML(S.stars[s.id]||0)}</button>`}).join("")}</div>
+  <button class="primary" data-go="report">看我的成績單</button>`;
+}
+view.addEventListener("click",e=>{
+  const lv=e.target.closest("[data-lv]");if(lv){S.level=lv.dataset.lv;save();home();return}
+  const go=e.target.closest("[data-go]");if(go){route(go.dataset.go);return}
+  if(e.target.closest("[data-home]")){home();window.scrollTo(0,0)}
+});
+function route(id){window.scrollTo(0,0);({tf:tfStart,pair:pairStart,lock:lockView,grid:gridStart,exit:exitStart,report:report})[id]()}
+const backBtn=`<button class="ghost back" data-home>← 回地圖</button>`;
+
+/* ---------------- 1 ○× ---------------- */
+let tfQ,tfI,tfScore;
+function tfStart(){tfQ=shuffle(TF);tfI=0;tfScore=0;tfShow()}
+function tfShow(){
+  if(tfI>=tfQ.length){
+    const st=tfScore>=11?3:tfScore>=8?2:1;S.tf={done:1,score:tfScore};award("tf",st);
+    view.innerHTML=`${backBtn}<section class="card stack"><h2>○× 速答完成</h2><p class="q">答對 ${tfScore} / ${tfQ.length} 題</p>${starsHTML(st)}
+      <p class="muted">${tfScore>=11?"幾乎全對,概念很穩。":tfScore>=8?"不錯。看看錯的題目的說明,再玩一次拿滿星。":"再玩一次,這次特別看每題的說明。"}</p>
+      <div class="row"><button class="primary" id="again">再玩一次</button><button data-home>回地圖</button></div></section>`;
+    $("again").onclick=tfStart;return}
+  const q=tfQ[tfI];
+  view.innerHTML=`${backBtn}<div class="bar"><i style="width:${tfI/tfQ.length*100}%"></i></div>
+  <section class="card stack"><span class="muted">第 ${tfI+1} / ${tfQ.length} 題</span><p class="q">${q[0]}</p>
+    <div class="tf"><button data-a="1" id="tfY">○<small>對</small></button><button data-a="0" id="tfN">×<small>錯</small></button></div>
+    <div id="tfFb" aria-live="polite"></div></section>`;
+  view.querySelectorAll(".tf button").forEach(b=>b.onclick=()=>{
+    const ok=(+b.dataset.a)===q[1];rec(q[2],ok);if(ok){tfScore++;good()}else bad();
+    view.querySelectorAll(".tf button").forEach(x=>x.disabled=true);
+    $("tfFb").innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"答對了":"答錯了,正確答案是 "+(q[1]?"○":"×")}</b>${q[3]}</div><button class="primary" id="nx" style="margin-top:12px;width:100%">${tfI+1>=tfQ.length?"看結果":"下一題"}</button>`;
+    $("nx").onclick=()=>{tfI++;tfShow()};$("nx").focus()})}
+
+/* ---------------- 2 配對 ---------------- */
+function pairStart(){
+  let selP=null,selA=null,miss=0,done=0;
+  const ans=shuffle(PAIRS.map((p,i)=>[p[1],i]));
+  view.innerHTML=`${backBtn}<section class="card stack"><h2>連比配對</h2><p>先點左邊的題目,再點右邊的答案。配對成功會變綠色。</p><p class="muted" id="pst">已配對 0 / ${PAIRS.length}</p></section>
+  <div class="pairs"><div class="col" id="cp">${PAIRS.map((p,i)=>`<button class="pc" data-p="${i}">${p[0]}</button>`).join("")}</div>
+  <div class="col" id="ca">${ans.map(a=>`<button class="pc ans" data-a="${a[1]}">${a[0]}</button>`).join("")}</div></div><div id="pfin"></div>`;
+  const clear=()=>view.querySelectorAll(".pc.sel").forEach(x=>x.classList.remove("sel"));
+  function tryMatch(){
+    if(selP===null||selA===null)return;
+    const pb=view.querySelector(`#cp [data-p="${selP}"]`),ab=view.querySelector(`#ca [data-a="${selA}"]`);
+    if(selP===selA){pb.classList.remove("sel");ab.classList.remove("sel");pb.classList.add("ok");ab.classList.add("ok");pb.disabled=ab.disabled=true;done++;good();rec(PAIRS[selP][2],true);
+      $("pst").textContent=`已配對 ${done} / ${PAIRS.length}`;
+      if(done===PAIRS.length){const st=miss<=2?3:miss<=5?2:1;S.pairDone=1;award("pair",st);
+        $("pfin").innerHTML=`<section class="card stack"><h2>全部配對成功</h2><p>配錯 ${miss} 次。</p>${starsHTML(st)}<div class="row"><button class="primary" data-home>回地圖</button><button id="pre">再玩一次</button></div></section>`;$("pre").onclick=pairStart}}
+    else{miss++;bad();rec(PAIRS[selP][2],false);pb.classList.add("shake");ab.classList.add("shake");setTimeout(()=>{pb.classList.remove("shake","sel");ab.classList.remove("shake","sel")},300)}
+    selP=selA=null}
+  $("cp").onclick=e=>{const b=e.target.closest(".pc");if(!b||b.disabled)return;view.querySelectorAll("#cp .sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");selP=+b.dataset.p;tryMatch()};
+  $("ca").onclick=e=>{const b=e.target.closest(".pc");if(!b||b.disabled)return;view.querySelectorAll("#ca .sel").forEach(x=>x.classList.remove("sel"));b.classList.add("sel");selA=+b.dataset.a;tryMatch()};
+}
+
+/* ---------------- 3 密室逃脫 ---------------- */
+function lockView(){
+  const L=LOCKS[S.level],lv=S.level,auto=lv==="basic"?1:0;
+  const solved=S.locks[lv];
+  view.innerHTML=`${backBtn}<section class="card stack"><h2>密室逃脫:${lv==="basic"?"基礎版":"進階版"}</h2>
+    <p>每道鎖的密碼就是題目的答案。算好了按「開鎖」。算式可以寫在紙上。</p></section>
+  ${L.map((k,i)=>{const sh=Math.max(S.hints[lv][i],auto);return `
+  <section class="card lock ${solved[i]?"solved":""}" id="lk${i}">
+    <h3>第 ${i+1} 道鎖 <span class="tag">${k.n}</span><span class="tag">${k.u}</span>${solved[i]?`<span class="tag" style="color:var(--ok);border-color:var(--ok)">已開</span>`:""}</h3>
+    <p class="q" style="font-size:1.12rem">${k.q}</p>${k.f?FIGS[k.f]:""}
+    <div id="hs${i}" class="stack">${k.h.slice(0,sh).map(h=>`<div class="hint">${h}</div>`).join("")}</div>
+    ${solved[i]?`<div class="fb ok"><b>密碼 ${k.a}</b>${k.e}</div>`:`
+    <div class="ans-row"><input id="in${i}" type="text" inputmode="text" autocomplete="off" aria-label="第 ${i+1} 道鎖的答案" placeholder="答案">
+      <button class="primary" data-open="${i}">開鎖</button></div>
+    <div class="row"><button class="ghost" data-hint="${i}" ${sh>=k.h.length?"disabled":""}>給我提示</button><span id="msg${i}" aria-live="polite"></span></div>`}
+  </section>`}).join("")}
+  <section class="card stack"><h2>寶箱密碼</h2><div class="code">${L.map((k,i)=>`<span class="${solved[i]?"on":""}">${solved[i]?k.a:"?"}</span>`).join("")}</div>
+  <div id="chest">${solved.every(Boolean)?chestHTML():""}</div></section>`;
+  view.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openLock(+b.dataset.open));
+  view.querySelectorAll("[data-hint]").forEach(b=>b.onclick=()=>{const i=+b.dataset.hint;S.hints[lv][i]=Math.max(S.hints[lv][i],auto)+1;save();lockKeep(i)});
+  view.querySelectorAll(".ans-row input").forEach(inp=>inp.addEventListener("keydown",e=>{if(e.key==="Enter")openLock(+inp.id.slice(2))}));
+}
+function lockKeep(i){const y=window.scrollY;lockView();window.scrollTo(0,y)}
+function chestHTML(){const lv=S.level,au=lv==="basic"?1:0,miss=S.lockMiss[lv]+S.hints[lv].reduce((a,b)=>a+Math.max(b-au,0),0);const st=miss<=3?3:miss<=8?2:1;award("lock",st);
+  return `<div class="treasure"><h2>寶箱打開了</h2><p>密碼 ${LOCKS[lv].map(k=>k.a).join(" - ")}</p>${starsHTML(st)}<p style="margin-top:10px"><button class="primary" data-home>回地圖</button></p></div>`}
+function openLock(i){
+  const lv=S.level,k=LOCKS[lv][i],inp=$("in"+i);if(!inp)return;
+  if(!norm(inp.value)){$("msg"+i).textContent="先填答案再開鎖";return}
+  if(same(inp.value,k.a)){S.locks[lv][i]=1;rec(k.u,true);good();save();lockKeep(i)}
+  else{S.lockMiss[lv]++;rec(k.u,false);bad();
+    const auto=lv==="basic"?1:0;$("msg"+i).innerHTML=`<span style="color:var(--bad);font-weight:700">還不對,再檢查一次。</span>`;
+    if(S.lockMiss[lv]%2===0&&S.hints[lv][i]<k.h.length){S.hints[lv][i]=Math.max(S.hints[lv][i],auto)+1}
+    save();const v=inp.value;lockView();const n=$("in"+i);if(n){n.value=v;n.focus()}$("msg"+i).innerHTML=`<span style="color:var(--bad);font-weight:700">還不對,再檢查一次。</span>`}
+}
+
+/* ---------------- 4 方格放大 ---------------- */
+function gridStart(){
+  let pts=[],wrong=0,okd=false;
+  const cs=30,ox=20,oy=260,px=x=>ox+cs*x,py=y=>oy-cs*y;
+  let lines="";for(let x=0;x<=12;x++)lines+=`<line class="gl" x1="${px(x)}" y1="${py(0)}" x2="${px(x)}" y2="${py(8)}"/>`;
+  for(let y=0;y<=8;y++)lines+=`<line class="gl" x1="${px(0)}" y1="${py(y)}" x2="${px(12)}" y2="${py(y)}"/>`;
+  let dots="";for(let x=0;x<=12;x++)for(let y=0;y<=8;y++)dots+=`<circle class="dot" cx="${px(x)}" cy="${py(y)}" r="2.5"/><circle class="pt" data-x="${x}" data-y="${y}" cx="${px(x)}" cy="${py(y)}" r="13"/>`;
+  const o=(x,y)=>10+22*x+","+(98-22*y);
+  const orig=`<svg class="fig" viewBox="0 0 130 112" width="150" role="img" aria-label="原圖 L 形"><path d="${[0,1,2,3,4,5].map(i=>{const p=[[0,0],[4,0],[4,2],[2,2],[2,3],[0,3]][i];return(i?"L":"M")+o(p[0],p[1])}).join("")}Z" fill="color-mix(in srgb,var(--hi) 45%,transparent)" stroke="var(--ink)" stroke-width="2.5" stroke-linejoin="round"/>
+    ${[0,1,2,3,4,5].map(i=>`<line x1="10" y1="${98-22*i*0.8}" x2="0" y2="0" stroke="none"/>`).join("")}</svg>`;
+  view.innerHTML=`${backBtn}<section class="card stack"><h2>方格放大影印機</h2>
+    <p>左邊是原圖(每一格長 1)。請在下方方格紙上,依序點出每個頂點,畫出<b>邊長都放大 2 倍</b>的 L 形。</p>
+    <div class="row" style="justify-content:center">${orig}<div class="muted" style="max-width:15em">原圖頂點:(0,0)、(4,0)、(4,2)、(2,2)、(2,3)、(0,3)<br>放大 2 倍:每個座標都乘 2。</div></div></section>
+  <section class="card stack"><div class="gridbox"><svg class="grid" id="gsvg" viewBox="0 0 400 285" role="img" aria-label="方格紙,可點選格點">${lines}<g id="gmine"></g>${dots}
+    <text x="${px(0)-12}" y="${py(0)+14}">0</text><text x="${px(12)-4}" y="${py(0)+14}">12</text><text x="${px(0)-18}" y="${py(8)+4}">8</text></svg></div>
+    <div class="row"><button id="gund">復原一步</button><button id="gclr">全部清除</button><button class="primary" id="gchk">檢查</button></div>
+    <p class="muted" id="gcnt">已點 0 個頂點(要點 6 個)</p><div id="gfb" aria-live="polite"></div></section>
+  <section class="card stack" id="gtab" hidden><h2>量一量,算一算</h2>
+    <div class="tbl"><label>放大後的周長 <input id="gp" type="text" inputmode="numeric" autocomplete="off"></label>
+    <label>相似比(原圖:放大圖)<input id="gr" type="text" inputmode="text" autocomplete="off" placeholder="例 1:2"></label>
+    <label>周長比(原圖:放大圖)<input id="gq" type="text" inputmode="text" autocomplete="off" placeholder="例 1:2"></label></div>
+    <p class="muted">提示:原圖六條邊長是 4、2、2、1、2、3。</p>
+    <div class="row"><button class="primary" id="gok">檢查答案</button></div><div id="gfb2" aria-live="polite"></div></section>`;
+  function draw(){
+    const g=$("gmine");let h="";
+    if(pts.length>=2)h+=`<polyline points="${pts.map(p=>px(p[0])+","+py(p[1])).join(" ")}${pts.length>=3?" "+px(pts[0][0])+","+py(pts[0][1]):""}" class="mine" ${pts.length<3?'fill="none"':""}/>`;
+    h+=pts.map((p,i)=>`<circle class="mv" cx="${px(p[0])}" cy="${py(p[1])}" r="6"/><text x="${px(p[0])+8}" y="${py(p[1])-8}">${i+1}</text>`).join("");
+    g.innerHTML=h;$("gcnt").textContent=`已點 ${pts.length} 個頂點(要點 6 個)`}
+  $("gsvg").addEventListener("click",e=>{const t=e.target.closest(".pt");if(!t||okd)return;
+    const p=[+t.dataset.x,+t.dataset.y];if(pts.length&&pts[pts.length-1][0]===p[0]&&pts[pts.length-1][1]===p[1])return;
+    if(pts.length>=6)return;pts.push(p);draw()});
+  $("gund").onclick=()=>{if(!okd){pts.pop();draw()}};
+  $("gclr").onclick=()=>{if(!okd){pts=[];draw();$("gfb").innerHTML=""}};
+  $("gchk").onclick=()=>{
+    if(pts.length!==6){$("gfb").innerHTML=`<div class="fb no"><b>還沒點完</b>L 形有 6 個頂點,你現在點了 ${pts.length} 個。</div>`;return}
+    const n=6;let ok=false;
+    for(let r=0;r<n&&!ok;r++)for(const d of [1,-1]){let m=true;for(let i=0;i<n;i++){const t=GRID_TARGET[(r+d*i+n*2)%n];if(t[0]!==pts[i][0]||t[1]!==pts[i][1]){m=false;break}}if(m){ok=true;break}}
+    if(ok){okd=true;good();rec("1-3",true);$("gfb").innerHTML=`<div class="fb ok"><b>放大成功</b>每個座標都乘 2,下邊 8、右邊 4……全部是原來的 2 倍。接著算周長。</div>`;$("gtab").hidden=false;$("gtab").scrollIntoView({behavior:"smooth",block:"start"})}
+    else{wrong++;bad();rec("1-3",false);$("gfb").innerHTML=`<div class="fb no"><b>還不對</b>原圖頂點 (4,0) 放大 2 倍會是 (8,0)。把原圖每個頂點的座標都乘 2,再依序連起來。</div>`}};
+  $("gok").onclick=()=>{
+    const a=same($("gp").value,"28"),b=same($("gr").value,"1:2"),c=same($("gq").value,"1:2");
+    if(a&&b&&c){good();rec("1-3",true);const st=wrong===0?3:wrong<=2?2:1;S.gridDone=1;award("grid",st);
+      $("gfb2").innerHTML=`<div class="fb ok"><b>全對</b>原圖周長 4+2+2+1+2+3=14,放大後 28。邊長變 2 倍,周長也變 2 倍:周長比=相似比=1:2。</div>${starsHTML(st)}<p style="margin-top:10px"><button class="primary" data-home>回地圖</button></p>`}
+    else{bad();rec("1-3",false);$("gfb2").innerHTML=`<div class="fb no"><b>有地方不對</b>${a?"":"周長:把放大後 6 條邊加起來(8+4+4+2+4+6)。"} ${b?"":"相似比:原圖邊長:放大後邊長,例如 4:8 化簡。"} ${c?"":"周長比:14:28 化簡。"}</div>`}};
+}
+
+/* ---------------- 5 出場券 ---------------- */
+function exitStart(){
+  const lv=S.level,Q=EXIT[lv];
+  view.innerHTML=`${backBtn}<section class="card stack"><h2>出場券:${lv==="basic"?"A 券(基礎)":"B 券(挑戰)"}</h2><p>3 題都答完按「交卷」。</p></section>
+  ${Q.map((q,i)=>`<section class="card stack"><span class="muted">第 ${i+1} 題・${q.u}</span><p class="q">${q.q}</p>${q.f?FIGS[q.f]:""}
+    <input id="ex${i}" class="nm" type="text" inputmode="text" autocomplete="off" aria-label="第 ${i+1} 題答案" placeholder="答案"><div id="exf${i}" aria-live="polite"></div></section>`).join("")}
+  <button class="primary" id="exSub">交卷</button><div id="exRes"></div>`;
+  $("exSub").onclick=()=>{
+    let c=0;Q.forEach((q,i)=>{const ok=same($("ex"+i).value,q.a);if(ok)c++;rec(q.u,ok);
+      $("exf"+i).innerHTML=`<div class="fb ${ok?"ok":"no"}"><b>${ok?"答對":"答案是 "+q.a}</b>${q.e}</div>`});
+    c===3?good():bad();const st=c===3?3:c===2?2:1;S.exit[lv]={score:c};award("exit",st);$("exSub").disabled=true;
+    $("exRes").innerHTML=`<section class="card stack"><h2>答對 ${c} / 3 題</h2>${starsHTML(st)}<div class="row"><button class="primary" data-go="report">看成績單</button><button data-home>回地圖</button></div></section>`;$("exRes").scrollIntoView({behavior:"smooth"})};
+}
+
+/* ---------------- 成績單 ---------------- */
+function report(){
+  const t=total(),rows=Object.entries(S.unit).map(([u,[r,w]])=>{const n=r+w,p=n?Math.round(r/n*100):null;return{u,r,w,n,p}});
+  const done=rows.filter(x=>x.n>=3),weak=done.length?done.reduce((a,b)=>b.p<a.p?b:a):null;
+  const names={"1-1":"1-1 連比","1-2":"1-2 比例線段","1-3":"1-3 相似多邊形"};
+  view.innerHTML=`${backBtn}<section class="card stack"><h2>我的成績單</h2>
+    <label class="stack" style="gap:4px"><span class="muted">姓名(給老師看)</span><input id="nm" class="nm" type="text" autocomplete="off" value="${S.name.replace(/"/g,"&quot;")}"></label>
+    <div class="row"><span class="pill">${S.level==="basic"?"基礎":"進階"}</span><span class="pill">★ ${t} / 15</span></div>
+    ${STATIONS.map(s=>`<div class="row" style="justify-content:space-between"><span>${s.t}</span>${starsHTML(S.stars[s.id]||0)}</div>`).join("")}</section>
+  <section class="card stack"><h2>各單元答對率</h2>
+    ${rows.map(x=>`<div class="ubar ${x.n>=3&&x.p<70?"weak":""}"><span>${names[x.u]}</span><div class="bar"><i style="width:${x.p||0}%"></i></div><span class="muted">${x.n?x.p+"%":"還沒玩"}</span></div>`).join("")}
+    <p class="muted">${weak&&weak.p<85?`建議段考前再看一次:${names[weak.u]}(答對 ${weak.r} / 答了 ${weak.n} 題)`:done.length?"每個單元都在 85% 以上,準備得不錯。":"多玩幾站,這裡就會出現你的弱點單元。"}</p></section>
+  <button id="reset" class="ghost">清除我的紀錄,重新開始</button><div id="rsc"></div>`;
+  $("nm").oninput=e=>{S.name=e.target.value;save()};
+  $("reset").onclick=()=>{$("rsc").innerHTML=`<div class="fb no"><b>確定要清除嗎?</b>星星和答對率會全部歸零。<div class="row" style="margin-top:8px"><button id="yes">確定清除</button><button id="no">取消</button></div></div>`;
+    $("yes").onclick=()=>{S=blank();save();home()};$("no").onclick=()=>{$("rsc").innerHTML=""}};
+}
+home();
+</script>
